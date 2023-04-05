@@ -1,17 +1,36 @@
 package ru.netology;
 
-import java.io.BufferedReader;
+import org.xml.sax.SAXException;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
 import java.io.File;
-import java.io.FileReader;
+import java.io.IOException;
 import java.util.Scanner;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ParserConfigurationException, TransformerException,
+            IOException, SAXException {
+        File log = new File("log.txt");
+        ClientLog clientLog = new ClientLog(log);
+        File loadBasket;
+        File saveBasket = null;
+        Basket basket;
+        XmlReader xmlRead = new XmlReader(new File("shop.xml"));
+        if (xmlRead.isLoad()) {
+            loadBasket = new File(xmlRead.getLoadFile());
+            if (xmlRead.getLoadFormat().equals("json")) {
+                basket = Basket.loadFromJson(loadBasket);
+            } else
+                basket = Basket.loadFromTxtFile(loadBasket);
+        } else
+            basket = new Basket(new String[]{"Хлеб", "Яблоки", "Молоко", "Гречневая крупа"},
+                    new int[]{50, 150, 100, 200});
 
-        File file = new File("basket.txt");
-        Basket basket = Basket.loadFromTxtFile(file);
+        if (xmlRead.isSave()) {
+            saveBasket = new File(xmlRead.getSaveFile());
+        }
+
         Scanner scanner = new Scanner(System.in);
-
         while (true) {
             int productNumber = 0;
             int productCount = 0;
@@ -19,6 +38,9 @@ public class Main {
             String input = scanner.nextLine();
             if ("3".equals(input) || "end".equals(input)) {
                 basket.printCart();
+                if (xmlRead.isLog()) {
+                    clientLog.exportAsCSV(log, new File(xmlRead.getLogFile()));
+                }
                 break;
             } else if ("1".equals(input) || "Добавить товар".equals(input)) {
                 while (true) {
@@ -45,7 +67,13 @@ public class Main {
                             continue;
                         }
                         basket.addToCart(productNumber, productCount);
-                        basket.saveTxt(file);
+                        if (xmlRead.isSave()) {
+                            if (xmlRead.getSaveFormat().equals("json")) {
+                                Basket.saveJson(saveBasket, basket);
+                            } else
+                                basket.saveTxt(saveBasket);
+                        }
+                        clientLog.log(productNumber,productCount, log);
                         break;
                     } catch (NumberFormatException e) {
                         System.out.println("Вы ввели некорректные значения, пожалуйста введите " +

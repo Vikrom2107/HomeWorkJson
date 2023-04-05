@@ -1,6 +1,14 @@
 package ru.netology;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+
 import java.io.*;
+import java.io.FileReader;
+import java.io.FileWriter;
+
 
 public class Basket {
     private String[] products;
@@ -47,7 +55,6 @@ public class Basket {
     public void setSumProducts(int sumProducts) {
         this.sumProducts = sumProducts;
     }
-
 
 
     public void saveTxt(File textFile) {
@@ -99,6 +106,34 @@ public class Basket {
                 return basket2;
             } catch (Exception e) {
                 System.out.println(e.getMessage());
+            }
+        }
+        return new Basket(new String[]{"Хлеб", "Яблоки", "Молоко", "Гречневая крупа"},
+                new int[]{50, 150, 100, 200});
+    }
+    public static void saveJson(File jsonFile, Basket basket) {
+        GsonBuilder builder = new GsonBuilder();
+        Gson gson = builder.create();
+        try (FileWriter file = new FileWriter(jsonFile)) {
+            file.write(gson.toJson(basket));
+            file.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+    public static Basket loadFromJson(File jsonFile) {
+        GsonBuilder builder = new GsonBuilder();
+        Gson gson = builder.create();
+        JSONParser parser = new JSONParser();
+        if(jsonFile.exists()) {
+            try {
+                Object obj = parser.parse(new FileReader(jsonFile));
+                JSONObject jsonObject = (JSONObject) obj;
+                Basket basket = gson.fromJson(jsonObject.toJSONString(), Basket.class);
+                return basket;
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
         return new Basket(new String[]{"Хлеб", "Яблоки", "Молоко", "Гречневая крупа"},
